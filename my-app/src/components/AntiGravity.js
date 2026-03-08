@@ -1,24 +1,24 @@
 /* eslint-disable react/no-unknown-property */
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
-import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import * as THREE from "three";
 
-const AntiGravityInner = ({
-  count = 300,
+const AntigravityInner = ({
+  count = 800,
   magnetRadius = 10,
   ringRadius = 10,
   waveSpeed = 0.4,
   waveAmplitude = 1,
   particleSize = 2,
   lerpSpeed = 0.1,
-  color = '#FF9FFC',
-  autoAnimate = false,
+  color = "#5227FF",
+  autoAnimate = true,
   particleVariance = 1,
   rotationSpeed = 0,
   depthFactor = 1,
   pulseSpeed = 3,
-  particleShape = 'capsule',
-  fieldStrength = 10
+  particleShape = "capsule",
+  fieldStrength = 10,
 }) => {
   const meshRef = useRef(null);
   const { viewport } = useThree();
@@ -30,52 +30,45 @@ const AntiGravityInner = ({
 
   const particles = useMemo(() => {
     const temp = [];
-    const width = viewport.width || 100;
-    const height = viewport.height || 100;
+    const width = viewport.width;
+    const height = viewport.height;
 
     for (let i = 0; i < count; i++) {
       const t = Math.random() * 100;
-      const factor = 20 + Math.random() * 100;
       const speed = 0.01 + Math.random() / 200;
-      const xFactor = -50 + Math.random() * 100;
-      const yFactor = -50 + Math.random() * 100;
-      const zFactor = -50 + Math.random() * 100;
 
-      const x = (Math.random() - 0.5) * width;
-      const y = (Math.random() - 0.5) * height;
+      const x = (Math.random() - 0.5) * width * 1.4;
+      const y = (Math.random() - 0.5) * height * 1.4;
       const z = (Math.random() - 0.5) * 20;
 
       const randomRadiusOffset = (Math.random() - 0.5) * 2;
 
       temp.push({
         t,
-        factor,
         speed,
-        xFactor,
-        yFactor,
-        zFactor,
         mx: x,
         my: y,
         mz: z,
         cx: x,
         cy: y,
         cz: z,
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        randomRadiusOffset
+        randomRadiusOffset,
       });
     }
+
     return temp;
   }, [count, viewport.width, viewport.height]);
 
-  useFrame(state => {
+  useFrame((state) => {
     const mesh = meshRef.current;
     if (!mesh) return;
 
     const { viewport: v, pointer: m } = state;
 
-    const mouseDist = Math.sqrt(Math.pow(m.x - lastMousePos.current.x, 2) + Math.pow(m.y - lastMousePos.current.y, 2));
+    const mouseDist = Math.sqrt(
+      Math.pow(m.x - lastMousePos.current.x, 2) +
+        Math.pow(m.y - lastMousePos.current.y, 2)
+    );
 
     if (mouseDist > 0.001) {
       lastMouseMoveTime.current = Date.now();
@@ -105,6 +98,8 @@ const AntiGravityInner = ({
 
       t = particle.t += speed / 2;
 
+      /* --- depth projection (important for perspective) --- */
+
       const projectionFactor = 1 - cz / 50;
       const projectedTargetX = targetX * projectionFactor;
       const projectedTargetY = targetY * projectionFactor;
@@ -118,14 +113,22 @@ const AntiGravityInner = ({
       if (dist < magnetRadius) {
         const angle = Math.atan2(dy, dx) + globalRotation;
 
-        const wave = Math.sin(t * waveSpeed + angle) * (0.5 * waveAmplitude);
-        const deviation = randomRadiusOffset * (5 / (fieldStrength + 0.1));
+        const wave =
+          Math.sin(t * waveSpeed + angle) * (0.5 * waveAmplitude);
+
+        const deviation =
+          randomRadiusOffset * (5 / (fieldStrength + 0.1));
 
         const currentRingRadius = ringRadius + wave + deviation;
 
-        targetPos.x = projectedTargetX + currentRingRadius * Math.cos(angle);
-        targetPos.y = projectedTargetY + currentRingRadius * Math.sin(angle);
-        targetPos.z = mz * depthFactor + Math.sin(t) * (1 * waveAmplitude * depthFactor);
+        targetPos.x =
+          projectedTargetX + currentRingRadius * Math.cos(angle);
+
+        targetPos.y =
+          projectedTargetY + currentRingRadius * Math.sin(angle);
+
+        targetPos.z =
+          mz * depthFactor + Math.sin(t) * waveAmplitude * depthFactor;
       }
 
       particle.cx += (targetPos.x - particle.cx) * lerpSpeed;
@@ -137,20 +140,28 @@ const AntiGravityInner = ({
       dummy.lookAt(projectedTargetX, projectedTargetY, particle.cz);
       dummy.rotateX(Math.PI / 2);
 
+      /* --- distance based scaling --- */
+
       const currentDistToMouse = Math.sqrt(
-        Math.pow(particle.cx - projectedTargetX, 2) + Math.pow(particle.cy - projectedTargetY, 2)
+        Math.pow(particle.cx - projectedTargetX, 2) +
+          Math.pow(particle.cy - projectedTargetY, 2)
       );
 
       const distFromRing = Math.abs(currentDistToMouse - ringRadius);
-      let scaleFactor = 1 - distFromRing / 10;
+
+      let scaleFactor = 1 - distFromRing / 20;
 
       scaleFactor = Math.max(0, Math.min(1, scaleFactor));
 
-      const finalScale = scaleFactor * (0.8 + Math.sin(t * pulseSpeed) * 0.2 * particleVariance) * particleSize;
+      const finalScale =
+        scaleFactor *
+        (0.8 +
+          Math.sin(t * pulseSpeed) * 0.2 * particleVariance) *
+        particleSize;
+
       dummy.scale.set(finalScale, finalScale, finalScale);
 
       dummy.updateMatrix();
-
       mesh.setMatrixAt(i, dummy.matrix);
     });
 
@@ -159,21 +170,32 @@ const AntiGravityInner = ({
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-      {particleShape === 'capsule' && <capsuleGeometry args={[0.1, 0.4, 4, 8]} />}
-      {particleShape === 'sphere' && <sphereGeometry args={[0.2, 16, 16]} />}
-      {particleShape === 'box' && <boxGeometry args={[0.3, 0.3, 0.3]} />}
-      {particleShape === 'tetrahedron' && <tetrahedronGeometry args={[0.3]} />}
+      {particleShape === "capsule" && (
+        <capsuleGeometry args={[0.1, 0.4, 4, 8]} />
+      )}
+      {particleShape === "sphere" && (
+        <sphereGeometry args={[0.2, 16, 16]} />
+      )}
+      {particleShape === "box" && (
+        <boxGeometry args={[0.3, 0.3, 0.3]} />
+      )}
+      {particleShape === "tetrahedron" && (
+        <tetrahedronGeometry args={[0.3]} />
+      )}
       <meshBasicMaterial color={color} />
     </instancedMesh>
   );
 };
 
-const AntiGravity = props => {
+const Antigravity = (props) => {
   return (
-    <Canvas camera={{ position: [0, 0, 50], fov: 35 }}>
-      <AntiGravityInner {...props} />
+    <Canvas
+      camera={{ position: [0, 0, 50], fov: 35 }}
+      dpr={[1, 1.5]}
+    >
+      <AntigravityInner {...props} />
     </Canvas>
   );
 };
 
-export default AntiGravity;
+export default Antigravity;

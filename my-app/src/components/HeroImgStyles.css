@@ -5,12 +5,19 @@
   overflow: hidden;
 }
 
+/* Antigravity background layer */
 .hero-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
 }
 
+.hero-bg canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Main hero content */
 .hero-container {
   position: relative;
   z-index: 2;
@@ -18,22 +25,25 @@
   width: 90%;
   max-width: 1200px;
   margin: auto;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
 }
+
+/* Disable pointer events for background interaction issues */
 .hero-container,
 .hero-left,
 .hero-right {
   pointer-events: none;
 }
 
+/* Allow buttons to be clickable */
 .hero-btns,
 .hero-btns * {
   pointer-events: auto;
 }
-
 
 .hero-left {
   max-width: 600px;
@@ -61,13 +71,14 @@
   border-radius: 50%;
 }
 
+/* Buttons */
 .hero-btns .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   padding: 0.8rem 2.2rem;
-  border-radius: 999px; /* 🔥 full pill */
+  border-radius: 999px;
 
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -78,22 +89,26 @@
 
   transition: all 0.3s ease;
 }
+
+/* Primary button */
 .hero-btns .btn:first-child {
-  background: #f3d000; /* your yellow */
+  background: #f3d000;
   color: #000;
   border: none;
 }
 
-/* hover */
+/* Hover effect */
 .hero-btns .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
 
-/* spacing */
+/* Spacing between buttons */
 .hero-btns .btn + .btn {
   margin-left: 1rem;
 }
+
+/* Responsive */
 @media screen and (max-width: 900px) {
   .hero-container {
     flex-direction: column;

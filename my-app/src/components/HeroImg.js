@@ -1,23 +1,49 @@
 import "./HeroImgStyles.css";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AntiGravity from "./AntiGravity";
 import ProfileImg from "../assets/prof.jpeg";
 import BlurText from "./BlurText";
+import Antigravity from "./Antigravity";
 
 const HeroImg = () => {
+  const [webglSupported, setWebglSupported] = useState(true);
+
+  useEffect(() => {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl");
+
+      if (!gl) setWebglSupported(false);
+    } catch {
+      setWebglSupported(false);
+    }
+  }, []);
+
   return (
     <div className="hero">
-      <div className="hero-bg">
-        <AntiGravity
-          count={800}
-          magnetRadius={6}
-          ringRadius={7}
-          color="#5227FF"
-          autoAnimate
-        />
-      </div>
 
+      {/* Background Particle Field */}
+      {webglSupported && (
+        <div className="hero-bg">
+          <Antigravity
+            count={800}
+            magnetRadius={10}
+            ringRadius={7}
+            waveAmplitude={1.2}
+            particleSize={1.6}
+            lerpSpeed={0.2}
+            color="#5227FF"
+            autoAnimate
+            particleVariance={1}
+            pulseSpeed={3}
+            depthFactor={1}
+          />
+        </div>
+      )}
+
+      {/* Hero Content */}
       <div className="hero-container">
         <div className="hero-left">
 
@@ -40,6 +66,7 @@ const HeroImg = () => {
             <Link to="/project" className="btn">
               Projects
             </Link>
+
             <Link to="/contact" className="btn btn-light">
               Contact
             </Link>
@@ -50,6 +77,7 @@ const HeroImg = () => {
           <img src={ProfileImg} className="img" alt="profile" />
         </div>
       </div>
+
     </div>
   );
 };
